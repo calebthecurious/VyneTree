@@ -30,14 +30,20 @@
 }
 
 .network-link {
-  stroke-dasharray: 5;
-  animation: dash 15s linear infinite;
+  animation: dash 20s linear infinite;
 }
 
 @keyframes dash {
   to {
     stroke-dashoffset: 100;
   }
+}
+
+/* Hover effect for the links */
+.network-link:hover {
+  stroke-opacity: 1 !important;
+  stroke-width: 4px !important;
+  transition: all 0.3s ease;
 }
 
 .network-node:hover circle {

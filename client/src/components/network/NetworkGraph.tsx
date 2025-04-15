@@ -73,7 +73,7 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
         name: 'You',
         userId,
         relationshipTier: 'Intimate',
-        photo: null,
+        photo: 'https://ui-avatars.com/api/?name=You&background=3b82f6&color=ffffff&bold=true',
         lastInteractedAt: new Date(),
         notes: null,
         createdAt: new Date(),
@@ -83,7 +83,7 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
       tier: 'You',
       color: '#3b82f6',
       neglected: false,
-      radius: 20,
+      radius: 24, // Slightly larger for emphasis
       x: centerX,
       y: centerY,
       fx: centerX, // Fixed position X
@@ -216,9 +216,25 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
       .data(links)
       .enter()
       .append('line')
-      .attr('stroke', '#e2e8f0')
+      .attr('class', 'network-link')
+      .attr('stroke', d => {
+        const targetNode = d.target as Node;
+        // Different colors for different tiers
+        switch(targetNode.tier) {
+          case 'Intimate': return '#ef4444';
+          case 'Best': return '#f97316';
+          case 'Good': return '#8b5cf6';
+          case 'Tribe': return '#10b981';
+          default: return '#e2e8f0';
+        }
+      })
       .attr('stroke-width', d => (d.strength || 0.1) * 3)
-      .attr('stroke-opacity', 0.6);
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-dasharray', d => {
+        const targetNode = d.target as Node;
+        // Different dash patterns for different tiers
+        return targetNode.neglected ? '5 3' : '3 5';
+      });
     
     // Create node groups
     const node = nodeGroup
@@ -236,6 +252,20 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
             onNodeClick(d.contact);
           }
         }
+      })
+      .on('dblclick', (event, d) => {
+        event.preventDefault();
+        // On double click, simulate a "focus" by making this node temporarily fixed
+        // and allowing other nodes to reposition around it
+        nodes.forEach(n => {
+          if (n.id !== 0) { // Don't unfix the center "You" node
+            n.fx = n.id === d.id ? d.x : null;
+            n.fy = n.id === d.id ? d.y : null;
+          }
+        });
+        
+        // Restart the simulation with higher alpha to reposition nodes
+        simulation.alpha(1).restart();
       })
       .call(d3.drag<SVGGElement, Node>()
         .on('start', (event, d) => {
@@ -257,13 +287,34 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
         })
       );
       
-    // Add the node circles
+    // Create defs for clip paths
+    const defs = svg.append('defs');
+    
+    // Add clip paths for each node
+    nodes.forEach(node => {
+      defs.append('clipPath')
+        .attr('id', `clip-${node.id}`)
+        .append('circle')
+        .attr('r', node.radius);
+    });
+
+    // Add the node avatars/photos with clip paths
     node.append('circle')
       .attr('r', d => d.radius)
       .attr('fill', d => d.color)
       .attr('class', d => d.neglected ? 'glow-effect' : '')
       .attr('stroke', d => d.neglected ? '#ef4444' : 'none')
       .attr('stroke-width', d => d.neglected ? 2 : 0);
+      
+    // Add images for contacts who have photos
+    node.append('image')
+      .attr('xlink:href', d => d.contact.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(d.contact.name)}&background=${d.color.replace('#', '')}&color=ffffff`)
+      .attr('width', d => d.radius * 2)
+      .attr('height', d => d.radius * 2)
+      .attr('x', d => -d.radius)
+      .attr('y', d => -d.radius)
+      .attr('clip-path', d => `url(#clip-${d.id})`)
+      .attr('preserveAspectRatio', 'xMidYMid slice');
     
     // Add node labels (names)
     node.append('text')
@@ -380,6 +431,17 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
               <div className="w-3 h-3 rounded-full mr-1 border-2 border-red-500"></div>
               <span>Neglected</span>
             </div>
+          </div>
+          
+          {/* Tooltip for interaction guidance */}
+          <div className="absolute bottom-4 right-4 bg-white/90 p-2 rounded-md text-xs border border-gray-200 shadow-md max-w-[200px]">
+            <div className="font-medium mb-1">Tips:</div>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Click a contact to view details</li>
+              <li>Double-click to focus on a contact</li>
+              <li>Drag contacts to reposition</li>
+              <li>Use controls to zoom in/out</li>
+            </ul>
           </div>
         </>
       )}
