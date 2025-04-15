@@ -1,13 +1,146 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertContactSchema, insertMessageSchema, 
   insertCalendarEventSchema, insertRsvpSchema, insertAiPromptSchema } from "@shared/schema";
 import { z } from "zod";
+import passport from "passport";
+import { isAuthenticated, isAuthenticatedOrDev, hashPassword } from "./auth";
+import { log } from "./vite";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed some initial data for demo purposes
   await seedInitialData();
+
+  // Authentication routes
+  app.post("/api/auth/login", (req: Request, res: Response, next) => {
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        log(`Login error: ${err}`, 'auth');
+        return next(err);
+      }
+      
+      if (!user) {
+        return res.status(401).json({ message: info.message || "Authentication failed" });
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          log(`Login session error: ${err}`, 'auth');
+          return next(err);
+        }
+        
+        // Remove password from response
+        const userWithoutPassword = { ...user };
+        delete userWithoutPassword.password;
+        
+        log(`User logged in: ${user.username}`, 'auth');
+        return res.json({ message: "Login successful", user: userWithoutPassword });
+      });
+    })(req, res, next);
+  });
+  
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+      const username = (req.user as any)?.username;
+      req.logout((err) => {
+        if (err) {
+          log(`Logout error: ${err}`, 'auth');
+          return res.status(500).json({ message: "Logout failed" });
+        }
+        log(`User logged out: ${username}`, 'auth');
+        res.json({ message: "Logout successful" });
+      });
+    } else {
+      res.json({ message: "No active session" });
+    }
+  });
+  
+  app.get("/api/auth/me", (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+      // Remove password from response
+      const user = { ...(req.user as any) };
+      delete user.password;
+      
+      return res.json(user);
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      // In development, default to demo user
+      storage.getUser(1).then(user => {
+        if (user) {
+          const userWithoutPassword = { ...user };
+          delete userWithoutPassword.password;
+          return res.json(userWithoutPassword);
+        } else {
+          return res.status(401).json({ message: "Not authenticated" });
+        }
+      });
+    } else {
+      res.status(401).json({ message: "Not authenticated" });
+    }
+  });
+  
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      // Check if email already exists
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(409).json({ message: "Email already exists" });
+      }
+      
+      // Hash password
+      const hashedPassword = await hashPassword(userData.password);
+      
+      // Create user with hashed password
+      const newUser = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+        profilePicture: userData.profilePicture || null,
+        subscriptionPlan: userData.subscriptionPlan || 'Free'
+      });
+      
+      // Remove password from response
+      const userWithoutPassword = { ...newUser };
+      delete userWithoutPassword.password;
+      
+      log(`User registered: ${newUser.username}`, 'auth');
+      
+      // Log the user in automatically
+      req.logIn(newUser, (err) => {
+        if (err) {
+          log(`Auto login error after registration: ${err}`, 'auth');
+          return res.status(201).json({ 
+            message: "Registration successful, but auto-login failed", 
+            user: userWithoutPassword 
+          });
+        }
+        
+        return res.status(201).json({ 
+          message: "Registration and login successful", 
+          user: userWithoutPassword 
+        });
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid registration data", 
+          errors: error.errors 
+        });
+      }
+      
+      log(`Registration error: ${error}`, 'auth');
+      return res.status(500).json({ message: "Registration failed" });
+    }
+  });
 
   // Users routes
   app.get("/api/users/:id", async (req, res) => {
@@ -207,10 +340,13 @@ async function seedInitialData() {
   const existingUser = await storage.getUserByUsername("demo");
   if (existingUser) return;
   
+  // Hash password for demo user
+  const hashedPassword = await hashPassword("password123");
+  
   // Create demo user
   const user = await storage.createUser({
     username: "demo",
-    password: "password123",
+    password: hashedPassword,
     email: "demo@vynetree.com",
     name: "Sarah Chen",
     profilePicture: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
