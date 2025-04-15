@@ -8,6 +8,34 @@ import type {
   AiPrompt, InsertAiPrompt
 } from '@shared/schema';
 
+// Authentication API
+export const authApi = {
+  login: async (email: string, password: string): Promise<{ message: string; user: User }> => {
+    const res = await apiRequest('POST', '/api/auth/login', { email, password });
+    return res.json();
+  },
+  
+  logout: async (): Promise<{ message: string }> => {
+    const res = await apiRequest('POST', '/api/auth/logout');
+    return res.json();
+  },
+  
+  register: async (userData: InsertUser): Promise<{ message: string; user: User }> => {
+    const res = await apiRequest('POST', '/api/auth/register', userData);
+    return res.json();
+  },
+  
+  getCurrentUser: async (): Promise<User | null> => {
+    try {
+      const res = await apiRequest('GET', '/api/auth/me');
+      return res.json();
+    } catch (error) {
+      // If not authenticated, return null
+      return null;
+    }
+  }
+};
+
 // User API
 export const userApi = {
   getUser: async (id: number): Promise<User> => {
