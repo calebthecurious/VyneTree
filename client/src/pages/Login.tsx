@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -20,7 +20,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const navigate = useNavigate();
+  const [_, setLocation] = useLocation();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +39,7 @@ export default function Login() {
         email: data.email,
         password: data.password,
       });
-      navigate('/');
+      setLocation('/');
     } catch (error: any) {
       setError(error?.message || 'Login failed. Please check your credentials and try again.');
     }

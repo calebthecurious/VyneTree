@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -25,7 +25,7 @@ const registerSchema = insertUserSchema.extend({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function Register() {
-  const navigate = useNavigate();
+  const [_, setLocation] = useLocation();
   const { register } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +49,7 @@ export default function Register() {
     
     try {
       await register.mutateAsync(userData);
-      navigate('/');
+      setLocation('/');
     } catch (error: any) {
       setError(error?.message || 'Registration failed. Please try again.');
     }
