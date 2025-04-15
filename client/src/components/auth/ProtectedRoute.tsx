@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from 'react';
-import { useLocation, useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { useAuthContext } from './AuthProvider';
 
 interface ProtectedRouteProps {
@@ -8,17 +8,14 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuthContext();
-  const [location, navigate] = useLocation();
+  const [_, navigate] = useLocation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       // Redirect to login if not authenticated
-      navigate('/login', { 
-        replace: true,
-        state: { from: location } 
-      });
+      navigate('/login');
     }
-  }, [isAuthenticated, isLoading, navigate, location]);
+  }, [isAuthenticated, isLoading, navigate]);
 
   // Show nothing while checking authentication
   if (isLoading) {
