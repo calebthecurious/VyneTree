@@ -1,0 +1,95 @@
+/* Global custom styles for VyneTree */
+
+/* Custom scrollbar for WebKit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Network graph node styles */
+.network-node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.network-node:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+}
+
+.network-link {
+  stroke: #d1d5db;
+  stroke-width: 2;
+  stroke-opacity: 0.5;
+}
+
+/* Glowing effect for neglected connections */
+.glow-effect {
+  filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.7));
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.7)); }
+  50% { filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.9)); }
+  100% { filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.7)); }
+}
+
+/* Calendar specific styles */
+.calendar-event {
+  transition: transform 0.2s ease;
+}
+.calendar-event:hover {
+  transform: translateY(-2px);
+}
+
+/* Chat message animations */
+.message-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.message-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Button hover effects */
+.btn-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+}
+.page-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+.page-exit {
+  opacity: 1;
+}
+.page-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
+
+/* Loading state pulse animations */
+@keyframes loadingPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+.loading-pulse {
+  animation: loadingPulse 1.5s infinite ease-in-out;
+}
