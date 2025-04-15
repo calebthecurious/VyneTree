@@ -401,4 +401,10 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { SupabaseStorage } from './supabaseStorage';
+
+// Use Supabase storage by default, and MemStorage only for testing
+const useMemStorage = process.env.NODE_ENV === 'test';
+
+// For now, we're using Supabase storage for all environments
+export const storage = new SupabaseStorage();
