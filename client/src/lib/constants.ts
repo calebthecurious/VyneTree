@@ -1,87 +1,93 @@
-// Relationship tier definitions and configurations
+export const DEMO_USER_ID = 1;
+
+// Relationship tier definitions with styling for network visualization
 export const RELATIONSHIP_TIERS = {
-  Intimate: {
-    color: '#ef4444', // red-500
-    neglectThreshold: 14, // days
-    maxContacts: 5,
-    nodeSize: 20
+  'Intimate': {
+    nodeSize: 16,
+    color: '#f97316',  // orange-500
+    label: 'Intimate Circle',
+    interactionFrequency: 7,  // days
+    description: 'Your closest relationships (1-5 people)'
   },
-  Best: {
-    color: '#f59e0b', // amber-500
-    neglectThreshold: 30, // days
-    maxContacts: 15,
-    nodeSize: 18
+  'Best': {
+    nodeSize: 14,
+    color: '#06b6d4',  // cyan-500
+    label: 'Best Friends',
+    interactionFrequency: 30,  // days
+    description: 'Your close friends (5-15 people)'
   },
-  Good: {
-    color: '#10b981', // emerald-500 
-    neglectThreshold: 60, // days
-    maxContacts: 30,
-    nodeSize: 15
+  'Good': {
+    nodeSize: 12,
+    color: '#8b5cf6',  // violet-500
+    label: 'Good Friends',
+    interactionFrequency: 90,  // days
+    description: 'Friends you enjoy (15-50 people)'
   },
-  Tribe: {
-    color: '#3b82f6', // blue-500
-    neglectThreshold: 90, // days
-    maxContacts: 100,
-    nodeSize: 12
+  'Tribe': {
+    nodeSize: 10,
+    color: '#64748b',  // slate-500
+    label: 'Tribe',
+    interactionFrequency: 365,  // days
+    description: 'Acquaintances (50-150 people)'
   }
 };
 
-// Event types and their styling
+// Event types with styling for calendar
 export const EVENT_TYPES = {
   coffee: {
-    bgColor: 'bg-primary-50',
-    borderColor: 'border-primary-100',
-    textColor: 'text-primary-700',
-    icon: 'bx-coffee'
+    label: 'Coffee',
+    icon: 'bx-coffee',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    textColor: 'text-amber-800',
+    priority: 'medium',
   },
   lunch: {
-    bgColor: 'bg-secondary-50',
-    borderColor: 'border-secondary-100',
-    textColor: 'text-secondary-700',
-    icon: 'bx-food-menu'
+    label: 'Lunch',
+    icon: 'bx-food-menu',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
+    textColor: 'text-emerald-800',
+    priority: 'medium',
   },
   call: {
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-100',
-    textColor: 'text-amber-700',
-    icon: 'bx-phone'
+    label: 'Call',
+    icon: 'bx-phone',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    textColor: 'text-blue-800',
+    priority: 'low',
   },
   meeting: {
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-100',
-    textColor: 'text-blue-700',
-    icon: 'bx-calendar'
+    label: 'Meeting',
+    icon: 'bx-group',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200',
+    textColor: 'text-purple-800',
+    priority: 'high',
   },
   default: {
+    label: 'Event',
+    icon: 'bx-calendar',
     bgColor: 'bg-gray-50',
     borderColor: 'border-gray-200',
-    textColor: 'text-gray-700',
-    icon: 'bx-calendar'
-  }
+    textColor: 'text-gray-800',
+    priority: 'low',
+  },
 };
 
-// Predefined time slots for coffee chats
-export const AVAILABLE_SLOTS = [
-  { day: 'Tue', time: '2:00 PM' },
-  { day: 'Tue', time: '4:00 PM' },
-  { day: 'Thu', time: '10:00 AM' },
-  { day: 'Thu', time: '3:00 PM' },
-  { day: 'Fri', time: '11:00 AM' },
-];
-
-// AI Nudge types and their configuration
+// AI Nudge types with styling
 export const NUDGE_TYPES = {
   Reminder: {
-    actionButtons: ['call', 'message', 'schedule'],
-    priority: 'high',
-    icon: 'bx-bell'
+    label: 'Reminder',
+    icon: 'bx-bell',
+    color: '#ef4444',  // red-500
+    description: 'A reminder to reach out to someone you haven\'t connected with in a while'
   },
   Conversation: {
-    actionButtons: ['message', 'coffee', 'gift'],
-    priority: 'medium',
-    icon: 'bx-chat'
+    label: 'Conversation',
+    icon: 'bx-bulb',
+    color: '#3b82f6',  // blue-500
+    description: 'AI-generated conversation topics based on your relationship history'
   }
 };
-
-// Demo user data for testing
-export const DEMO_USER_ID = 1;
