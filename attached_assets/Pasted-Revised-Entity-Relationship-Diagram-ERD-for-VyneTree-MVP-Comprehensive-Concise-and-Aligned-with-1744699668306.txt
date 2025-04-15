@@ -1,0 +1,127 @@
+Revised Entity-Relationship Diagram (ERD) for VyneTree MVP
+Comprehensive, Concise, and Aligned with MVP Goals
+
+Core Entities
+users
+
+user_id (PK)
+
+email, name, profile_picture
+
+subscription_plan (Free/Premium)
+
+created_at, updated_at
+
+contacts (Replaces Friend + Relationship)
+
+contact_id (PK)
+
+user_id (FK → users)
+
+name, photo, relationship_tier (Intimate/Best/Good/Tribe)
+
+last_interacted_at, important_dates (JSON for birthdays, etc.)
+
+notes
+
+messages (Real-time chat)
+
+message_id (PK)
+
+sender_id (FK → users)
+
+receiver_id (FK → users)
+
+content, read_status, sent_at
+
+interactions (Non-chat interactions: calls, meetups)
+
+interaction_id (PK)
+
+user_id (FK → users)
+
+contact_id (FK → contacts)
+
+type (Call/Meetup), notes, timestamp
+
+calendar_events (Replaces Availability)
+
+event_id (PK)
+
+user_id (FK → users)
+
+title, start_time, end_time, shareable_link (Unique URL)
+
+rsvps (Replaces OptIn)
+
+rsvp_id (PK)
+
+event_id (FK → calendar_events)
+
+user_id (FK → users)
+
+status (Accepted/Declined/Pending)
+
+ai_prompts (New: AI-driven nudges)
+
+prompt_id (PK)
+
+user_id (FK → users)
+
+contact_id (FK → contacts)
+
+type (Reminder/Conversation Starter), content, used (Boolean)
+
+subscriptions (Monetization)
+
+subscription_id (PK)
+
+user_id (FK → users)
+
+plan (Free/Premium), start_date, end_date
+
+Relationships
+mermaid
+Copy
+erDiagram
+  users ||--o{ contacts : "manages"
+  users ||--o{ messages : "sends/receives"
+  users ||--o{ calendar_events : "creates"
+  users ||--o{ interactions : "logs"
+  users ||--|| subscriptions : "has"
+  contacts ||--o{ ai_prompts : "triggers"
+  contacts ||--o{ interactions : "involved_in"
+  calendar_events ||--o{ rsvps : "receives"
+  messages }|--|| users : "from"
+  messages }|--|| users : "to"
+Key Improvements
+Simplified Relationship Management
+
+Merged Friend + Relationship into contacts, adding relationship_tier and last_interacted_at (aligns with Dunbar’s Number visualization).
+
+Removed standalone Relationship table to reduce complexity.
+
+AI Integration
+
+Added ai_prompts to track AI-generated nudges and conversation starters (critical for MVP’s proactive value).
+
+Modernized Scheduling
+
+Replaced Availability → calendar_events with viral shareable_link.
+
+Replaced OptIn → rsvps to handle cross-user scheduling (e.g., friends RSVP’ing via shared links).
+
+Real-Time Chat
+
+Split generic Interaction into messages (real-time chat) and interactions (meetups/calls), improving focus.
+
+Monetization Ready
+
+Added subscriptions to enforce freemium limits (50 contacts for Free, 150 for Premium).
+
+Why This Works
+Comprehensive: Covers all MVP features (Dunbar visualization, AI nudges, scheduling, chat, monetization).
+
+Concise: Eliminates redundancy (e.g., merging Friend + Relationship).
+
+Scalable: Supports future phases (e.g., content_clips table can be added later for Phase 2).

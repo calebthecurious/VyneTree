@@ -1,0 +1,182 @@
+Product Requirements Document (PRD) for VyneTree MVP
+Version 3.0 | Comprehensive, Actionable, and PMF-Focused
+
+1. Executive Summary
+Product Name: VyneTree
+Vision: To empower individuals to nurture and leverage their 150 most meaningful relationships through visual, AI-driven tools that reduce social neglect and unlock opportunities.
+Mission: Make relationship-building effortless, guilt-free, and rewarding in a disconnected digital world.
+Tagline: “Your network is your net worth. Nurture it.”
+
+2. Objectives
+Solve Core Pain Points:
+
+Guilt of neglecting relationships.
+
+Friction in scheduling meetups.
+
+Fragmented communication across apps.
+
+Monetize from Day 1: Freemium model + affiliate partnerships.
+
+Validate PMF: Target niches begging for a solution (freelancers, remote workers).
+
+3. Target Audience
+Segment	Key Needs	Why VyneTree?
+Freelancers	Retain clients, generate referrals, avoid "out of sight, out of mind."	AI nudges remind them to engage clients; shareable calendar simplifies booking.
+Remote Workers	Combat loneliness, maintain global connections.	Visual graph highlights neglected friends; in-app chat centralizes communication.
+Solopreneurs	Monetize a "true fan" base of 100-150 supporters.	Future roadmap includes selling digital products directly to their network.
+4. Core Features (MVP Scope)
+4.1 Dunbar Network Graph
+Purpose: Visualize relationships to prioritize nurturing.
+Details:
+
+Color-Coded Nodes: Red (intimate), orange (best friends), green (good friends), blue (tribe).
+
+Glowing Borders: Highlight contacts neglected >30 days (AI-driven).
+
+Clickable Nodes: View profiles, chat, or schedule meetups.
+
+Import Contacts: CSV, Google Contacts, or manual entry.
+
+4.2 AI Relationship Nudges
+Purpose: Automate relationship maintenance.
+Details:
+
+Reminders: Email/SMS alerts for neglected contacts (e.g., “Message Sarah!”).
+
+Conversation Starters: OpenAI-generated prompts (e.g., “Ask about John’s new project!”).
+
+Sentiment Tracking: Basic mood tags (stressed, celebrating) from chat history.
+
+4.3 Shareable Weekly Calendar
+Purpose: Simplify scheduling with key contacts.
+Details:
+
+Drag-and-Drop UI: Block free times (e.g., “Coffee chats: Tue 2-4 PM”).
+
+Shareable Links: vyne.tree/[username]/free (e.g., share with “Best Friends” tier).
+
+RSVP System: Contacts claim slots directly in-app; syncs with Google Calendar.
+
+4.4 In-App Chat
+Purpose: Centralize communication to reduce app-switching.
+Details:
+
+Basic Messaging: Text, emojis, @mentions.
+
+Read Receipts: See when messages are viewed.
+
+Meetup Suggestions: Auto-suggest times from shared calendars (e.g., “Free Thursday?”).
+
+4.5 Freemium Gates
+Purpose: Drive revenue from Day 1.
+Details:
+
+Free Tier: 50 contacts, 3 AI nudges/week, 1 sharable calendar.
+
+Premium ($12/month):
+
+150 contacts.
+
+Unlimited AI nudges + SMS reminders.
+
+Advanced analytics (e.g., “Top 5 Neglected Connections”).
+
+5. Technical Specifications
+5.1 Tech Stack
+Component	Tool	Rationale
+Frontend	Next.js + shadcn/ui	SSR for SEO, pre-built components (calendar, tables) accelerate development.
+Backend	Supabase	All-in-one solution for auth, real-time DB, and serverless functions.
+Database	PostgreSQL	Relational structure for contacts, messages, and events.
+AI	OpenAI API	GPT-4 Turbo for personalized conversation starters.
+Hosting	Vercel	Seamless integration with Next.js + edge caching.
+5.2 Security & Compliance
+Data Encryption: AES-256 for data at rest, TLS 1.3 for data in transit.
+
+GDPR/CCPA Compliance: User data deletion/export tools.
+
+Row-Level Security (RLS): Supabase-enforced access controls.
+
+5.3 Key Integrations
+Google Calendar: Sync free/busy times.
+
+Twilio: SMS reminders.
+
+Stripe: Subscription management.
+
+6. User Stories & Flows
+6.1 User Story: “I want to stop forgetting important friends.”
+Flow:
+
+Sign up via email/Google.
+
+Import contacts from CSV/Google.
+
+View network graph → glowing nodes show neglected friends.
+
+Click node → send message using AI-generated prompt.
+
+6.2 User Story: “I hate scheduling back-and-forth.”
+Flow:
+
+Block free times in calendar.
+
+Share link with “Best Friends” tier.
+
+Friends RSVP → event auto-added to Google Calendar.
+
+6.3 User Story: “I want all my chats in one place.”
+Flow:
+
+Click node → open chat.
+
+Message: “@mention free time next week?” → auto-suggest available slots.
+
+7. Monetization Strategy
+7.1 Freemium Model
+Free Tier: Basic features (50 contacts).
+
+Premium ($12/month): Full network, AI, analytics.
+
+Add-Ons:
+
+Extra AI prompts: $0.99/10.
+
+Team plans: $20/user/month (client management for freelancers).
+
+7.2 Revenue Streams
+Affiliate Partnerships: 10% commission on Calendly/Coffee Chat links.
+
+Sponsored Gifts: Partner with platforms like Giftful (e.g., “Send a $10 coffee voucher”).
+
+8. Success Metrics
+Metric	Target	Measurement
+Activation Rate	30%	% of users importing ≥10 contacts post-signup.
+Weekly Active Users	40%	DAU/MAU ratio.
+Free → Paid Conversion	7%	Stripe subscription tracking.
+Chat Retention	3 sessions/week	Avg. chat usage per user.
+9. Roadmap
+Phase 1: MVP Launch (0-3 Months)
+Launch core features (Dunbar graph, AI nudges, calendar, chat).
+
+Target Product Hunt + indie hacker communities.
+
+Phase 2: Growth (3-6 Months)
+Mobile App: iOS-first with offline sync.
+
+Auto-Categorization: AI sorts contacts into Dunbar tiers.
+
+Public Profiles: vyne.tree/[username] for social scheduling.
+
+Phase 3: Monetization Expansion (6-12 Months)
+Digital Storefront: Sell templates/coaching to your network.
+
+Enterprise Tier: Team-based client management for agencies.
+
+10. Risks & Mitigations
+Risk	Mitigation
+Low user adoption	Guilt-driven ads targeting freelancers on LinkedIn/Reddit.
+Feature overload	Defer advanced analytics/voice chat to post-MVP.
+Privacy concerns	Transparent data policies + opt-in consent for contact imports.
+11. Conclusion
+VyneTree’s MVP combines visual guilt triggers, AI automation, and frictionless scheduling to solve relationship neglect for professionals who depend on their network for success. By focusing on a niche audience and leveraging Next.js/Supabase for rapid development, VyneTree is poised to achieve product-market fit as the “Fitbit for relationships.”
