@@ -202,7 +202,7 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
       )
       .force('charge', d3.forceManyBody().strength(-1000))
       .force('center', d3.forceCenter(centerX, centerY))
-      .force('collide', d3.forceCollide<Node>().radius(function(d: any) { return (d as Node).radius * 2; }))
+      .force('collide', d3.forceCollide<Node>().radius(d => d.radius * 2))
       .force('radial', d3.forceRadial<Node>(d => {
         // Radial positioning based on tier
         if (d.id === 0) return 0; // Center node
@@ -218,8 +218,7 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
       .append('line')
       .attr('stroke', '#e2e8f0')
       .attr('stroke-width', d => (d.strength || 0.1) * 3)
-      .attr('stroke-opacity', 0.6)
-      .attr('class', 'network-link');
+      .attr('stroke-opacity', 0.6);
     
     // Create node groups
     const node = nodeGroup
@@ -227,7 +226,7 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
       .data(nodes)
       .enter()
       .append('g')
-      .attr('class', 'node network-node')
+      .attr('class', 'node')
       .attr('cursor', 'pointer')
       .on('click', (event, d) => {
         if (d.id !== 0) { // Not the center "You" node
