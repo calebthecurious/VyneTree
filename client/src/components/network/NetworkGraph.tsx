@@ -183,8 +183,8 @@ const NetworkGraph = ({ userId, onNodeClick }: NetworkGraphProps) => {
                 <div>
                   <p className="text-sm">{selectedContact.notes || 'No notes available.'}</p>
                   <p className="text-xs text-gray-500 mt-2">
-                    Last interaction: {selectedContact.lastInteractionDate ? 
-                      new Date(selectedContact.lastInteractionDate).toLocaleDateString() : 
+                    Last interaction: {selectedContact.lastInteractedAt ? 
+                      new Date(selectedContact.lastInteractedAt).toLocaleDateString() : 
                       'Never'}
                   </p>
                   {isContactNeglected(selectedContact) && (

@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { contactsApi } from '@/lib/api';
-import { InsertContact } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
+import useContacts from '@/hooks/useContacts';
+import { InsertContact } from '@shared/schema';
 
 interface AddContactModalProps {
   userId: number;
@@ -17,35 +16,15 @@ interface AddContactModalProps {
 }
 
 const AddContactModal = ({ userId, isOpen, onClose }: AddContactModalProps) => {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { createContact, isCreating } = useContacts({ userId });
   
   const [formData, setFormData] = useState<Partial<InsertContact>>({
     userId,
     name: '',
     relationshipTier: 'Tribe',
-    photo: '',
-    notes: ''
-  });
-  
-  const createContactMutation = useMutation({
-    mutationFn: (contactData: InsertContact) => contactsApi.createContact(contactData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/contacts`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/contacts/recent`] });
-      toast({
-        title: "Contact added",
-        description: "New contact has been successfully added.",
-      });
-      handleClose();
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to add contact. Please try again.",
-        variant: "destructive",
-      });
-    }
+    notes: '',
+    photo: null
   });
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -53,8 +32,10 @@ const AddContactModal = ({ userId, isOpen, onClose }: AddContactModalProps) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, relationshipTier: value }));
+  const handleRadioChange = (value: string) => {
+    if (value === 'Intimate' || value === 'Best' || value === 'Good' || value === 'Tribe') {
+      setFormData(prev => ({ ...prev, relationshipTier: value }));
+    }
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,14 +43,15 @@ const AddContactModal = ({ userId, isOpen, onClose }: AddContactModalProps) => {
     
     if (!formData.name) {
       toast({
-        title: "Validation Error",
-        description: "Contact name is required.",
-        variant: "destructive",
+        title: "Error",
+        description: "Contact name is required",
+        variant: "destructive"
       });
       return;
     }
     
-    createContactMutation.mutate(formData as InsertContact);
+    createContact(formData as InsertContact);
+    handleClose();
   };
   
   const handleClose = () => {
@@ -77,19 +59,19 @@ const AddContactModal = ({ userId, isOpen, onClose }: AddContactModalProps) => {
       userId,
       name: '',
       relationshipTier: 'Tribe',
-      photo: '',
-      notes: ''
+      notes: '',
+      photo: null
     });
     onClose();
   };
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Contact</DialogTitle>
           <DialogDescription>
-            Enter the details of your new connection. Click save when you're done.
+            Add a new contact to your relationship network.
           </DialogDescription>
         </DialogHeader>
         
@@ -105,30 +87,37 @@ const AddContactModal = ({ userId, isOpen, onClose }: AddContactModalProps) => {
                 value={formData.name}
                 onChange={handleInputChange}
                 className="col-span-3"
+                placeholder="Contact name"
                 required
               />
             </div>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="relationshipTier" className="text-right">
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
                 Relationship
               </Label>
-              <Select
-                value={formData.relationshipTier}
-                onValueChange={handleSelectChange}
+              <RadioGroup 
+                value={formData.relationshipTier} 
+                onValueChange={handleRadioChange}
+                className="col-span-3 space-y-1"
               >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select a tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="Intimate">Intimate</SelectItem>
-                    <SelectItem value="Best">Best Friend</SelectItem>
-                    <SelectItem value="Good">Good Friend</SelectItem>
-                    <SelectItem value="Tribe">Tribe</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Intimate" id="intimate" />
+                  <Label htmlFor="intimate">Intimate Circle (1-5)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Best" id="best" />
+                  <Label htmlFor="best">Best Friends (5-15)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Good" id="good" />
+                  <Label htmlFor="good">Good Friends (15-50)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Tribe" id="tribe" />
+                  <Label htmlFor="tribe">Tribe (50-150)</Label>
+                </div>
+              </RadioGroup>
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
@@ -141,7 +130,7 @@ const AddContactModal = ({ userId, isOpen, onClose }: AddContactModalProps) => {
                 value={formData.photo || ''}
                 onChange={handleInputChange}
                 className="col-span-3"
-                placeholder="https://example.com/photo.jpg"
+                placeholder="https://example.com/photo.jpg (optional)"
               />
             </div>
             
@@ -155,24 +144,17 @@ const AddContactModal = ({ userId, isOpen, onClose }: AddContactModalProps) => {
                 value={formData.notes || ''}
                 onChange={handleInputChange}
                 className="col-span-3"
-                placeholder="Add some notes about this contact..."
+                placeholder="Add notes about this contact (optional)"
               />
             </div>
           </div>
           
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleClose}
-            >
+            <Button variant="outline" type="button" onClick={handleClose}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={createContactMutation.isPending}
-            >
-              {createContactMutation.isPending ? 'Saving...' : 'Save Contact'}
+            <Button type="submit" disabled={isCreating || !formData.name}>
+              {isCreating ? 'Adding...' : 'Add Contact'}
             </Button>
           </DialogFooter>
         </form>

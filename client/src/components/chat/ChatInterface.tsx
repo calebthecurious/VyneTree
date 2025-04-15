@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Message, InsertMessage } from '@shared/schema';
-import { messagesApi } from '@/lib/api';
-import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import ChatMessage from '@/components/chat/ChatMessage';
+import useChat from '@/hooks/useChat';
 
 interface ChatInterfaceProps {
   currentUserId: number;
@@ -11,185 +11,142 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({ currentUserId, otherUserId }: ChatInterfaceProps) => {
-  const [messageInput, setMessageInput] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
+  const [newMessage, setNewMessage] = useState('');
   
-  const { data: otherUser, isLoading: loadingUser } = useQuery<User>({
-    queryKey: [`/api/users/${otherUserId}`],
-  });
+  const { 
+    messages, 
+    otherUser, 
+    isLoading, 
+    isLoadingUser, 
+    sendMessage, 
+    isSending 
+  } = useChat({ currentUserId });
   
-  const { data: messages, isLoading: loadingMessages } = useQuery<Message[]>({
-    queryKey: [`/api/messages/${currentUserId}/${otherUserId}`],
-    refetchInterval: 5000, // Poll for new messages every 5 seconds
-  });
-  
-  const sendMessageMutation = useMutation({
-    mutationFn: (messageData: InsertMessage) => messagesApi.createMessage(messageData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/messages/${currentUserId}/${otherUserId}`] });
-      setMessageInput('');
-    }
-  });
-  
-  // Scroll to bottom whenever messages change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-  
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-    
-    sendMessageMutation.mutate({
-      senderId: currentUserId,
-      receiverId: otherUserId,
-      content: messageInput,
-      status: 'Sent'
-    });
-  };
-  
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim()) {
+      sendMessage(newMessage);
+      setNewMessage('');
     }
   };
-  
-  if (loadingUser || loadingMessages) {
-    return (
-      <div className="bg-white shadow rounded-lg overflow-hidden flex flex-col" style={{ height: '400px' }}>
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <Skeleton className="h-10 w-40" />
-        </div>
-        <div className="flex-1 p-4 overflow-y-auto">
-          <Skeleton className="h-16 w-3/4 mb-4" />
-          <Skeleton className="h-16 w-3/4 mb-4 ml-auto" />
-          <Skeleton className="h-16 w-3/4" />
-        </div>
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
-          <Skeleton className="h-10 w-full" />
-        </div>
-      </div>
-    );
-  }
   
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden flex flex-col" style={{ height: '400px' }}>
-      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <img 
-              className="h-10 w-10 rounded-full object-cover" 
-              src={otherUser?.profilePicture || "https://via.placeholder.com/40"} 
-              alt={otherUser?.name}
-            />
+    <div className="flex flex-col h-full">
+      {/* Chat Header */}
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center">
+        {isLoadingUser ? (
+          <div className="flex items-center animate-pulse">
+            <div className="h-10 w-10 rounded-full bg-gray-200 mr-3"></div>
+            <div>
+              <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+              <div className="h-3 w-24 bg-gray-200 rounded"></div>
+            </div>
           </div>
-          <div className="ml-3">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Chat with {otherUser?.name}
-            </h3>
-            <p className="text-sm text-gray-500">Online</p>
+        ) : (
+          <div className="flex items-center">
+            <div className="relative mr-3">
+              <img 
+                src={otherUser?.profilePicture || "https://via.placeholder.com/40"} 
+                alt={otherUser?.name || 'User'} 
+                className="h-10 w-10 rounded-full object-cover"
+              />
+              <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-400 rounded-full border-2 border-white"></span>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium">{otherUser?.name || 'Loading...'}</h3>
+              <p className="text-xs text-gray-500">Active now</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button className="p-1 text-gray-400 hover:text-gray-500">
+        )}
+        
+        <div className="ml-auto flex space-x-2">
+          <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded">
             <i className='bx bx-phone text-xl'></i>
           </button>
-          <button className="p-1 text-gray-400 hover:text-gray-500">
+          <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded">
             <i className='bx bx-video text-xl'></i>
           </button>
-          <button className="p-1 text-gray-400 hover:text-gray-500">
+          <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded">
             <i className='bx bx-info-circle text-xl'></i>
           </button>
         </div>
       </div>
       
-      <div className="flex-1 p-4 overflow-y-auto" id="chat-messages">
-        {messages && messages.map((message) => {
-          const isSentByCurrentUser = message.senderId === currentUserId;
-          const messageTime = new Date(message.sentAt);
-          
-          return (
-            <div 
-              key={message.id} 
-              className={`flex items-end mb-4 ${isSentByCurrentUser ? 'justify-end' : ''}`}
-            >
-              {!isSentByCurrentUser && (
-                <div className="flex-shrink-0 mr-3">
-                  <img 
-                    className="h-8 w-8 rounded-full object-cover" 
-                    src={otherUser?.profilePicture || "https://via.placeholder.com/32"} 
-                    alt={otherUser?.name}
-                  />
-                </div>
-              )}
-              <div 
-                className={`py-2 px-4 max-w-xs rounded-lg ${
-                  isSentByCurrentUser 
-                    ? 'bg-primary-100 text-gray-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                <p className="text-sm">{message.content}</p>
-                <p className="text-xs text-gray-500 mt-1">{format(messageTime, 'h:mm a')}</p>
+      {/* Messages Area */}
+      <ScrollArea className="flex-1 p-4">
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                <div className={`
+                  rounded-lg p-3 max-w-[70%] 
+                  ${i % 2 === 0 ? 'bg-primary-100 text-primary-900' : 'bg-gray-100 text-gray-900'}
+                  animate-pulse h-12
+                `}></div>
               </div>
-              {isSentByCurrentUser && (
-                <div className="flex-shrink-0 ml-3">
-                  <img 
-                    className="h-8 w-8 rounded-full object-cover" 
-                    src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
-                    alt="Current user"
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
-        
-        {/* Calendar invitation card - shown conditionally */}
-        {messages && messages.some(m => m.content.toLowerCase().includes('thursday') && m.content.toLowerCase().includes('4 pm')) && (
-          <div className="flex items-center justify-center my-4">
-            <div className="bg-secondary-50 border border-secondary-100 rounded-lg py-2 px-4">
-              <div className="flex items-center space-x-2">
-                <i className='bx bx-calendar text-secondary-500'></i>
-                <div>
-                  <p className="text-sm font-medium text-secondary-700">Thursday, 4:00 PM</p>
-                  <p className="text-xs text-gray-500">Coffee Chat with {otherUser?.name}</p>
-                </div>
-                <button className="ml-2 text-xs text-primary-600 hover:text-primary-700 font-medium">Accept</button>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages && messages.length > 0 ? (
+              messages.map((message) => (
+                <ChatMessage 
+                  key={message.id} 
+                  message={message} 
+                  isCurrentUser={message.senderId === currentUserId}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <i className='bx bx-message-square-dots text-3xl text-gray-400 mb-2'></i>
+                <p className="text-gray-500">No messages yet</p>
+                <p className="text-sm text-gray-400">Start the conversation!</p>
               </div>
-            </div>
+            )}
           </div>
         )}
-        
-        <div ref={messagesEndRef} />
-      </div>
+      </ScrollArea>
       
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
-        <div className="flex items-center">
-          <button className="p-1 text-gray-400 hover:text-gray-500">
+      {/* Message Input Area */}
+      <div className="p-3 border-t border-gray-200">
+        <form className="flex space-x-2" onSubmit={handleSendMessage}>
+          <button 
+            type="button" 
+            className="p-2 text-gray-400 hover:text-gray-600 rounded"
+          >
             <i className='bx bx-smile text-xl'></i>
           </button>
-          <button className="p-1 text-gray-400 hover:text-gray-500">
-            <i className='bx bx-link text-xl'></i>
-          </button>
-          <input 
-            type="text" 
-            className="flex-1 mx-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" 
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            onKeyDown={handleKeyPress}
+            className="flex-1"
           />
-          <button 
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            onClick={handleSendMessage}
-            disabled={!messageInput.trim() || sendMessageMutation.isPending}
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={isSending || !newMessage.trim()}
           >
-            Send
-          </button>
+            <i className='bx bx-send text-xl'></i>
+          </Button>
+        </form>
+        <div className="mt-2 flex justify-between text-xs text-gray-500">
+          <div className="flex space-x-3">
+            <button className="flex items-center">
+              <i className='bx bx-image mr-1'></i>
+              <span>Photo</span>
+            </button>
+            <button className="flex items-center">
+              <i className='bx bx-calendar mr-1'></i>
+              <span>Schedule</span>
+            </button>
+          </div>
+          <div>
+            <button className="flex items-center text-primary-600">
+              <i className='bx bx-bulb mr-1'></i>
+              <span>AI Suggestions</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

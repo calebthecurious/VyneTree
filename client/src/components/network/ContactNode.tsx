@@ -13,9 +13,9 @@ interface ContactNodeProps {
 const ContactNode = ({ contact, isNeglected, onSelect }: ContactNodeProps) => {
   const tierInfo = RELATIONSHIP_TIERS[contact.relationshipTier as keyof typeof RELATIONSHIP_TIERS];
   
-  // For demo purposes, if lastInteractionDate is missing, create a random one
-  const lastInteractionDate = contact.lastInteractionDate 
-    ? new Date(contact.lastInteractionDate) 
+  // For demo purposes, if lastInteractedAt is missing, create a random one
+  const lastInteractionDate = contact.lastInteractedAt 
+    ? new Date(contact.lastInteractedAt) 
     : new Date(Date.now() - Math.random() * 2592000000); // Random date within last 30 days
   
   return (
@@ -48,7 +48,7 @@ const ContactNode = ({ contact, isNeglected, onSelect }: ContactNodeProps) => {
             <div>
               <h3 className="text-sm font-medium text-gray-900">{contact.name}</h3>
               <p className="text-xs text-gray-500">
-                {contact.email || 'No email available'}
+                Contact card
               </p>
             </div>
             <span 
