@@ -81,10 +81,10 @@ const Sidebar = () => {
         <ul className="space-y-1">
           {menuItems.map((item) => (
             <li key={item.path}>
-              <Link to={item.path}>
-                <a 
+              <Link href={item.path}>
+                <div 
                   className={`
-                    flex items-center px-3 py-2 rounded-md text-sm
+                    flex items-center px-3 py-2 rounded-md text-sm cursor-pointer
                     ${location === item.path
                       ? 'bg-primary-50 text-primary-700'
                       : 'text-gray-700 hover:bg-gray-100'}
@@ -107,14 +107,14 @@ const Sidebar = () => {
                       5
                     </span>
                   )}
-                </a>
+                </div>
               </Link>
             </li>
           ))}
         </ul>
         
         <div className="mt-8 pt-4 border-t border-gray-200">
-          <a 
+          <div 
             className="flex items-center px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
             onClick={() => console.log('Logout')}
           >
@@ -122,7 +122,7 @@ const Sidebar = () => {
               <LogOutIcon className="h-5 w-5" />
             </span>
             Sign Out
-          </a>
+          </div>
           
           <div className="mt-4 px-3">
             <button className="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-md">

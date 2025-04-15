@@ -90,16 +90,16 @@ const TopNav = () => {
                 {navItems.map((item) => (
                   <li key={item.path}>
                     <Link href={item.path}>
-                      <a
+                      <div
                         className={`
-                          flex items-center p-3 text-base rounded-md
+                          flex items-center p-3 text-base rounded-md cursor-pointer
                           ${location === item.path ? 'bg-primary-100 text-primary-700' : 'text-gray-700'}
                         `}
                         onClick={() => setIsOpen(false)}
                       >
                         {item.icon}
                         <span className="ml-3">{item.label}</span>
-                      </a>
+                      </div>
                     </Link>
                   </li>
                 ))}
