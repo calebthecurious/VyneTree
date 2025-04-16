@@ -1,5 +1,5 @@
+**VyneTree**
 
-VyneTree
 VyneTree is a modern, full-stack relationship management and portfolio web application. It features a responsive 3D portfolio front-end, robust authentication, and a secure backend API, all built with best practices for scalability and maintainability.
 
 Features
