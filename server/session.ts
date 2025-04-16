@@ -1,7 +1,8 @@
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
 import dotenv from 'dotenv';
-import { log } from './vite';
+import { log } from './vite.js';
+import { Express } from 'express';
 
 // Load environment variables
 dotenv.config();
@@ -27,7 +28,7 @@ export const sessionOptions = {
 };
 
 // Initialize session
-export const initSession = (app: any) => {
+export const initSession = (app: Express) => {
   log('Initializing session middleware', 'session');
   app.use(session(sessionOptions));
 };

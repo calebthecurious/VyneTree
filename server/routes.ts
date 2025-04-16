@@ -1,12 +1,12 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 import { insertUserSchema, insertContactSchema, insertMessageSchema, 
-  insertCalendarEventSchema, insertRsvpSchema, insertAiPromptSchema } from "@shared/schema";
+  insertCalendarEventSchema, insertRsvpSchema, insertAiPromptSchema } from "../shared/schema.js";
 import { z } from "zod";
 import passport from "passport";
-import { isAuthenticated, isAuthenticatedOrDev, hashPassword } from "./auth";
-import { log } from "./vite";
+import { isAuthenticated, isAuthenticatedOrDev, hashPassword } from "./auth.js";
+import { log } from "./vite.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed some initial data for demo purposes
@@ -14,7 +14,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication routes
   app.post("/api/auth/login", (req: Request, res: Response, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         log(`Login error: ${err}`, 'auth');
         return next(err);
@@ -24,15 +24,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: info.message || "Authentication failed" });
       }
       
-      req.logIn(user, (err) => {
+      req.logIn(user, (err: any) => {
         if (err) {
           log(`Login session error: ${err}`, 'auth');
           return next(err);
         }
         
-        // Remove password from response
-        const userWithoutPassword = { ...user };
-        delete userWithoutPassword.password;
+        // Remove password from response using destructuring
+        const { passwordHash, ...userWithoutPassword } = user;
         
         log(`User logged in: ${user.username}`, 'auth');
         return res.json({ message: "Login successful", user: userWithoutPassword });
@@ -43,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", (req: Request, res: Response) => {
     if (req.isAuthenticated()) {
       const username = (req.user as any)?.username;
-      req.logout((err) => {
+      req.logout((err: any) => {
         if (err) {
           log(`Logout error: ${err}`, 'auth');
           return res.status(500).json({ message: "Logout failed" });
@@ -58,19 +57,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/auth/me", (req: Request, res: Response) => {
     if (req.isAuthenticated()) {
-      // Remove password from response
-      const user = { ...(req.user as any) };
-      delete user.password;
+      // Remove password from response using destructuring
+      const { passwordHash, ...userWithoutPassword } = req.user as any;
       
-      return res.json(user);
+      return res.json(userWithoutPassword);
     }
     
     if (process.env.NODE_ENV === 'development') {
       // In development, default to demo user
       storage.getUser(1).then(user => {
         if (user) {
-          const userWithoutPassword = { ...user };
-          delete userWithoutPassword.password;
+          // Remove password from response using destructuring
+          const { passwordHash, ...userWithoutPassword } = user;
           return res.json(userWithoutPassword);
         } else {
           return res.status(401).json({ message: "Not authenticated" });
@@ -98,47 +96,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Hash password
-      const hashedPassword = await hashPassword(userData.password);
+      const { password, ...userDataWithoutPassword } = userData;
+      const hashedPassword = await hashPassword(password);
       
       // Create user with hashed password
       const newUser = await storage.createUser({
-        ...userData,
-        password: hashedPassword,
+        ...userDataWithoutPassword,
+        password: hashedPassword, // Using 'password' because insertUserSchema expects it
         profilePicture: userData.profilePicture || null,
         subscriptionPlan: userData.subscriptionPlan || 'Free'
       });
       
-      // Remove password from response
-      const userWithoutPassword = { ...newUser };
-      delete userWithoutPassword.password;
+      // Remove sensitive data from response using destructuring
+      const { passwordHash, ...userWithoutPassword } = newUser;
       
       log(`User registered: ${newUser.username}`, 'auth');
       
       // Log the user in automatically
-      req.logIn(newUser, (err) => {
+      req.logIn(newUser, (err: any) => {
         if (err) {
           log(`Auto login error after registration: ${err}`, 'auth');
-          return res.status(201).json({ 
-            message: "Registration successful, but auto-login failed", 
+          return res.status(500).json({ 
+            message: "Registration failed", 
             user: userWithoutPassword 
           });
         }
         
-        return res.status(201).json({ 
-          message: "Registration and login successful", 
+        return res.json({ 
+          message: "Registration successful", 
           user: userWithoutPassword 
         });
       });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid registration data", 
-          errors: error.errors 
-        });
-      }
-      
+    } catch (error: any) {
       log(`Registration error: ${error}`, 'auth');
-      return res.status(500).json({ message: "Registration failed" });
+      res.status(400).json({ message: error.message || "Registration failed" });
     }
   });
 
@@ -150,7 +141,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const user = await storage.getUser(id);
     if (!user) return res.status(404).json({ message: "User not found" });
     
-    return res.json(user);
+    // Remove password from response using destructuring
+    const { passwordHash, ...userWithoutPassword } = user;
+    
+    return res.json(userWithoutPassword);
   });
 
   app.post("/api/users", async (req, res) => {
@@ -163,8 +157,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = await storage.createUser(userData);
-      return res.status(201).json(user);
-    } catch (error) {
+      // Remove password from response using destructuring
+      const { passwordHash, ...userWithoutPassword } = user;
+      
+      return res.status(201).json(userWithoutPassword);
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid user data", errors: error.errors });
       }
@@ -195,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contactData = insertContactSchema.parse(req.body);
       const contact = await storage.createContact(contactData);
       return res.status(201).json(contact);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid contact data", errors: error.errors });
       }
@@ -212,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedContact) return res.status(404).json({ message: "Contact not found" });
       
       return res.json(updatedContact);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Failed to update contact" });
     }
   });
@@ -246,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messageData = insertMessageSchema.parse(req.body);
       const message = await storage.createMessage(messageData);
       return res.status(201).json(message);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid message data", errors: error.errors });
       }
@@ -268,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventData = insertCalendarEventSchema.parse(req.body);
       const event = await storage.createCalendarEvent(eventData);
       return res.status(201).json(event);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid event data", errors: error.errors });
       }
@@ -290,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rsvpData = insertRsvpSchema.parse(req.body);
       const rsvp = await storage.createRsvp(rsvpData);
       return res.status(201).json(rsvp);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid RSVP data", errors: error.errors });
       }
@@ -313,7 +310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const promptData = insertAiPromptSchema.parse(req.body);
       const prompt = await storage.createAiPrompt(promptData);
       return res.status(201).json(prompt);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid prompt data", errors: error.errors });
       }
@@ -355,22 +352,22 @@ async function seedInitialData() {
   
   // Create some sample contacts
   const contacts = [
-    { name: "Mom", relationshipTier: "Intimate", userId: user.id, photo: "https://images.unsplash.com/photo-1581535571342-5cf4e9b5a2c8?w=400&auto=format&fit=crop" },
-    { name: "Dad", relationshipTier: "Intimate", userId: user.id, photo: "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?w=400&auto=format&fit=crop" },
-    { name: "Partner", relationshipTier: "Intimate", userId: user.id, photo: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=400&auto=format&fit=crop" },
-    { name: "Sister", relationshipTier: "Intimate", userId: user.id, photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000) },
-    { name: "Alex", relationshipTier: "Best", userId: user.id, photo: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-    { name: "Maya", relationshipTier: "Best", userId: user.id, photo: "https://images.unsplash.com/photo-1542206395-9feb3edaa68d?w=400&auto=format&fit=crop" },
-    { name: "Jordan", relationshipTier: "Best", userId: user.id, photo: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-    { name: "Taylor", relationshipTier: "Best", userId: user.id, photo: "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=400&auto=format&fit=crop" },
-    { name: "Sam", relationshipTier: "Good", userId: user.id, photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop" },
-    { name: "Jamie", relationshipTier: "Good", userId: user.id, photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000) },
-    { name: "Casey", relationshipTier: "Good", userId: user.id, photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop" },
-    { name: "Drew", relationshipTier: "Good", userId: user.id, photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop" },
-    { name: "Pat", relationshipTier: "Tribe", userId: user.id, photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop" },
-    { name: "Ari", relationshipTier: "Tribe", userId: user.id, photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop" },
-    { name: "Robin", relationshipTier: "Tribe", userId: user.id, photo: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=400&auto=format&fit=crop" },
-    { name: "Quinn", relationshipTier: "Tribe", userId: user.id, photo: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000) }
+    { name: "Mom", relationshipTier: "Intimate" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1581535571342-5cf4e9b5a2c8?w=400&auto=format&fit=crop" },
+    { name: "Dad", relationshipTier: "Intimate" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?w=400&auto=format&fit=crop" },
+    { name: "Partner", relationshipTier: "Intimate" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=400&auto=format&fit=crop" },
+    { name: "Sister", relationshipTier: "Intimate" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000) },
+    { name: "Alex", relationshipTier: "Best" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+    { name: "Maya", relationshipTier: "Best" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1542206395-9feb3edaa68d?w=400&auto=format&fit=crop" },
+    { name: "Jordan", relationshipTier: "Best" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+    { name: "Taylor", relationshipTier: "Best" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=400&auto=format&fit=crop" },
+    { name: "Sam", relationshipTier: "Good" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop" },
+    { name: "Jamie", relationshipTier: "Good" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000) },
+    { name: "Casey", relationshipTier: "Good" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop" },
+    { name: "Drew", relationshipTier: "Good" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop" },
+    { name: "Pat", relationshipTier: "Tribe" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop" },
+    { name: "Ari", relationshipTier: "Tribe" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop" },
+    { name: "Robin", relationshipTier: "Tribe" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=400&auto=format&fit=crop" },
+    { name: "Quinn", relationshipTier: "Tribe" as const, userId: user.id, photo: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=400&auto=format&fit=crop", lastInteractedAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000) }
   ];
   
   const createdContacts = await Promise.all(
@@ -382,19 +379,19 @@ async function seedInitialData() {
     { 
       userId: user.id, 
       contactId: createdContacts[3].id, // Sister
-      type: "Reminder", 
+      type: "Reminder" as const, 
       content: "Ask her about her new job at Google. She started 2 weeks ago and would appreciate your support."
     },
     { 
       userId: user.id, 
       contactId: createdContacts[6].id, // Jordan
-      type: "Reminder", 
+      type: "Reminder" as const, 
       content: "Ask how his startup is progressing. He mentioned funding challenges in your last conversation."
     },
     { 
       userId: user.id, 
       contactId: createdContacts[9].id, // Jamie
-      type: "Conversation", 
+      type: "Conversation" as const, 
       content: "Jamie just updated their LinkedIn with a new position at Tesla. Send a congratulatory message!"
     }
   ];
@@ -446,7 +443,7 @@ async function seedInitialData() {
       password: "password123",
       email: "sarah@example.com",
       name: "Sarah",
-      profilePicture: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+      profilePicture: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
       subscriptionPlan: "Free"
     });
     
@@ -456,19 +453,19 @@ async function seedInitialData() {
         senderId: sarah.id,
         receiverId: user.id,
         content: "Hey! How's the new project coming along? Would love to catch up soon!",
-        status: "Read"
+        status: "Read" as const
       },
       {
         senderId: user.id,
         receiverId: sarah.id,
         content: "It's going well! The client is happy with the progress. Would love to catch up - are you free this Thursday?",
-        status: "Read"
+        status: "Read" as const
       },
       {
         senderId: sarah.id,
         receiverId: user.id,
         content: "Thursday works for me! Would 4 PM work for you?",
-        status: "Read"
+        status: "Read" as const
       }
     ];
     

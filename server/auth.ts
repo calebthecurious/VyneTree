@@ -1,8 +1,8 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Request, Response, NextFunction } from 'express';
-import { storage } from './storage';
-import { log } from './vite';
+import { storage } from './storage.js';
+import { log } from './vite.js';
 import bcrypt from 'bcrypt';
 
 // Set up the Passport Local Strategy
@@ -25,7 +25,7 @@ passport.use(
         
         // Verify password (in production, compare hashed passwords)
         // For now, we're doing a simple comparison for development
-        const isValidPassword = await bcrypt.compare(password, user.password);
+        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
         
         if (!isValidPassword) {
           log(`Login attempt failed: Invalid password for user ${user.email}`, 'auth');
@@ -44,8 +44,8 @@ passport.use(
 );
 
 // Serialize user for the session
-passport.serializeUser((user: any, done) => {
-  done(null, user.id);
+passport.serializeUser((user: Express.User, done) => {
+  done(null, (user as any).id);
 });
 
 // Deserialize user from the session

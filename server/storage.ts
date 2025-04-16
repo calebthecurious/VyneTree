@@ -8,7 +8,7 @@ import {
   type Rsvp, type InsertRsvp,
   type AiPrompt, type InsertAiPrompt,
   type Subscription, type InsertSubscription,
-} from "@shared/schema";
+} from "../shared/schema.js";
 
 export interface IStorage {
   // User Operations
@@ -106,8 +106,11 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id,
+      passwordHash: insertUser.password, // Map password from client to passwordHash for DB
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      profilePicture: insertUser.profilePicture ?? null,
+      subscriptionPlan: insertUser.subscriptionPlan ?? 'Free',
     };
     this.users.set(id, user);
     return user;
@@ -155,7 +158,11 @@ export class MemStorage implements IStorage {
       ...insertContact,
       id,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      photo: insertContact.photo ?? null,
+      lastInteractedAt: insertContact.lastInteractedAt ?? null,
+      importantDates: insertContact.importantDates ?? null,
+      notes: insertContact.notes ?? null,
     };
     this.contacts.set(id, contact);
     return contact;
@@ -200,7 +207,8 @@ export class MemStorage implements IStorage {
     const message: Message = {
       ...insertMessage,
       id,
-      sentAt: now
+      sentAt: now,
+      status: insertMessage.status ?? 'Sent',
     };
     this.messages.set(id, message);
     return message;
@@ -235,7 +243,8 @@ export class MemStorage implements IStorage {
     const interaction: Interaction = {
       ...insertInteraction,
       id,
-      timestamp: now
+      timestamp: now,
+      notes: insertInteraction.notes ?? null,
     };
     this.interactions.set(id, interaction);
     
@@ -269,7 +278,10 @@ export class MemStorage implements IStorage {
     const event: CalendarEvent = {
       ...insertEvent,
       id,
-      createdAt: now
+      createdAt: now,
+      location: insertEvent.location ?? null,
+      description: insertEvent.description ?? null,
+      shareableLink: insertEvent.shareableLink ?? null,
     };
     this.calendarEvents.set(id, event);
     return event;
@@ -308,7 +320,8 @@ export class MemStorage implements IStorage {
       ...insertRsvp,
       id,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      status: insertRsvp.status ?? 'Pending',
     };
     this.rsvps.set(id, rsvp);
     return rsvp;
@@ -350,7 +363,8 @@ export class MemStorage implements IStorage {
     const prompt: AiPrompt = {
       ...insertPrompt,
       id,
-      createdAt: now
+      createdAt: now,
+      used: insertPrompt.used ?? null,
     };
     this.aiPrompts.set(id, prompt);
     return prompt;
@@ -382,7 +396,9 @@ export class MemStorage implements IStorage {
     const id = this.subscriptionIdCounter++;
     const subscription: Subscription = {
       ...insertSubscription,
-      id
+      id,
+      startDate: insertSubscription.startDate ?? new Date(),
+      endDate: insertSubscription.endDate ?? null,
     };
     this.subscriptions.set(id, subscription);
     return subscription;
@@ -401,7 +417,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-import { SupabaseStorage } from './supabaseStorage';
+import { SupabaseStorage } from './supabaseStorage.js';
 
 // Use Supabase storage by default, and MemStorage only for testing
 const useMemStorage = process.env.NODE_ENV === 'test';

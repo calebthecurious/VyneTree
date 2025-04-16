@@ -1,8 +1,8 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import dotenv from 'dotenv';
-import * as schema from '../shared/schema';
-import { log } from './vite';
+import * as schema from '../shared/schema.js';
+import { log } from './vite.js';
 
 // Load environment variables
 dotenv.config();

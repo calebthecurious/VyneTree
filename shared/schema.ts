@@ -16,7 +16,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  passwordHash: text("password_hash").notNull(),
   profilePicture: text("profile_picture"),
   subscriptionPlan: subscriptionPlanEnum("subscription_plan").notNull().default('Free'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -101,11 +101,17 @@ export const subscriptions = pgTable("subscriptions", {
 });
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
-});
+export const insertUserSchema = createInsertSchema(users)
+  .omit({ 
+    id: true, 
+    createdAt: true, 
+    updatedAt: true,
+    passwordHash: true 
+  })
+  .extend({
+    // Add password field for client-side forms
+    password: z.string().min(8, { message: 'Password must be at least 8 characters long' })
+  });
 
 export const insertContactSchema = createInsertSchema(contacts).omit({ 
   id: true, 

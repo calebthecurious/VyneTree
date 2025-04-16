@@ -1,7 +1,7 @@
-import { db } from './db';
-import { IStorage } from './storage';
+import { db } from './db.js';
+import { IStorage } from './storage.js';
 import { eq, and, desc, or, lt, gt, isNull, isNotNull, asc } from 'drizzle-orm';
-import { log } from './vite';
+import { log } from './vite.js';
 import {
   User, InsertUser, users,
   Contact, InsertContact, contacts,
@@ -11,7 +11,7 @@ import {
   Rsvp, InsertRsvp, rsvps,
   AiPrompt, InsertAiPrompt, aiPrompts,
   Subscription, InsertSubscription, subscriptions
-} from '../shared/schema';
+} from '../shared/schema.js';
 
 export class SupabaseStorage implements IStorage {
   // USER OPERATIONS
@@ -47,7 +47,13 @@ export class SupabaseStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     try {
-      const result = await db.insert(users).values(user).returning();
+      // Map password to passwordHash for the database
+      const { password, ...userData } = user;
+      const result = await db.insert(users).values({
+        ...userData,
+        passwordHash: password,
+      }).returning();
+      
       if (result.length === 0) {
         throw new Error('Failed to create user: No user returned from database');
       }
