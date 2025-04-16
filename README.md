@@ -21,6 +21,7 @@ Backend Services
 Python FastAPI backend for additional services (optional)
 CI/CD Ready
 TypeScript build scripts and Python requirements included
+
 Tech Stack
 Frontend/Server: React, TypeScript, Node.js, Express, Vite, Material-UI, Three.js, React Three Fiber, Framer Motion
 Database: Supabase (Postgres)
@@ -28,6 +29,7 @@ ORM: Drizzle ORM
 Authentication: Passport.js, bcrypt
 Backend (optional): Python 3.11+, FastAPI
 Other: .env for secrets, GitHub for version control
+
 Getting Started
 1. Clone the Repository
 sh
@@ -70,6 +72,7 @@ sh
 CopyInsert
 cd backend
 uvicorn app.main:app --reload
+
 Project Structure
 CopyInsert
 VyneTreeWebApp/
@@ -81,21 +84,25 @@ VyneTreeWebApp/
 ├── .env             # Environment variables (not committed)
 ├── package.json     # Node.js project config
 └── README.md        # This file
+
 Scripts
 npm run dev — Start server in development mode
 npm run build — Build both server and client
 npm run start — Start server in production mode
 npm run build:client — Build client only
 npm run build:server — Build server only
+
 Security
 Never commit your .env file or secrets.
 Passwords are stored hashed using bcrypt.
 Sensitive routes are protected with Passport.js sessions.
+
 Contributing
 Fork this repo
 Create a feature branch (git checkout -b my-feature)
 Commit your changes
 Push to your fork and open a Pull Request
+
 License
 MIT License
 
